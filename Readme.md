@@ -12,7 +12,7 @@ This action expects the terraform module to use terratest and for the tests to b
 
 The common workflow is running terratest to test terraform against AWS. The action accepts input paramters:
 
-  * **SSH_PRIV_KEY** - Ann SSH private key with clone access to any further private repositories that may be needed
+  * **SSH_PRIV_KEY** - SSH private key with clone access to any further private repositories that may be needed
 
 For authentication with AWS you can set the environment variables:
 
