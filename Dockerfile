@@ -1,6 +1,6 @@
 FROM golang:buster
 
-RUN apt-get update && apt-get -y install \
+RUN apt-get update && apt-get --no-install-recommends -y install \
     git \
     unzip \
     python-pip \
