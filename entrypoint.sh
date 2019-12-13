@@ -17,8 +17,15 @@ ssh-add
 # Pre-seed host keys for github.com
 ssh-keyscan github.com >> /root/.ssh/known_hosts
 
-# Make sure we have the correct terraform version, if we have a .terraform-version file
-tfenv install || true
+# Allow terraform version override
+if [[ ! -z "$INPUT_TERRAFORM_VERSION" ]]; then
+  echo "terraform_version overried set to $INPUT_TERRAFORM_VERSION"
+  tfenv install "$INPUT_TERRAFORM_VERSION"
+  tfenv use "$INPUT_TERRAFORM_VERSION"
+else
+  # Make sure we have the correct terraform version, if we have a .terraform-version file
+  tfenv install || true
+fi
 
 # Setup under GOPATH so dep etc works
 echo "Setting up GOPATH to include $PWD"
