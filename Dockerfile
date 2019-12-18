@@ -14,6 +14,12 @@ RUN curl "https://s3.amazonaws.com/aws-cli/awscli-bundle.zip" -o "awscli-bundle.
     unzip awscli-bundle.zip && \
     ./awscli-bundle/install -i /usr/local/aws -b /usr/local/bin/aws;
 
+# Install packer
+RUN curl "https://releases.hashicorp.com/packer/1.4.5/packer_1.4.5_linux_amd64.zip" -o "packer.zip" && \
+    unzip packer.zip && \
+    mv packer /usr/local/bin && \
+    chmod a+x /usr/local/bin/packer
+
 RUN git clone https://github.com/tfutils/tfenv.git ~/.tfenv
 RUN echo 'export PATH="$HOME/.tfenv/bin:$PATH"' >> ~/.bash_profile && ln -s ~/.tfenv/bin/* /usr/local/bin
 RUN tfenv install 0.12.9
