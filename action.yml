@@ -7,6 +7,8 @@ inputs:
     required: true
   terraform_version:
     description: "If set override any .terraform-version file in the repo and use this specific version (can be latest)"
+  skip_terraform_fmt_check:
+    description: "If set skip checking that the terraform files are correctly formatted"
 runs:
   using: 'docker'
   image: 'Dockerfile'

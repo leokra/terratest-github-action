@@ -27,6 +27,11 @@ else
   tfenv install || true
 fi
 
+# Check terraform formatting before proceeding
+if [[ -z "$INPUT_SKIP_TERRAFORM_FMT_CHECK" ]]; then
+  terraform fmt -recursive -check -list=true
+fi
+
 # Setup under GOPATH so dep etc works
 echo "Setting up GOPATH to include $PWD"
 CHECKOUT=$(basename "$PWD")
