@@ -29,6 +29,7 @@ fi
 
 # Check terraform formatting before proceeding
 if [[ -z "$INPUT_SKIP_TERRAFORM_FMT_CHECK" ]]; then
+  echo "Checking terraform files for correct formatting"
   terraform fmt -recursive -check -list=true
 fi
 
