@@ -20,7 +20,7 @@ RUN curl "https://releases.hashicorp.com/packer/1.4.5/packer_1.4.5_linux_amd64.z
     mv packer /usr/local/bin && \
     chmod a+x /usr/local/bin/packer
 
-RUN git clone https://github.com/tfutils/tfenv.git ~/.tfenv
+RUN git clone -b v2.0.0-beta1 https://github.com/tfutils/tfenv.git ~/.tfenv
 RUN echo 'export PATH="$HOME/.tfenv/bin:$PATH"' >> ~/.bash_profile && ln -s ~/.tfenv/bin/* /usr/local/bin
 RUN tfenv install 0.12.9
 
