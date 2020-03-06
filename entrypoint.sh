@@ -1,41 +1,63 @@
 #!/bin/bash
 
-set -eo pipefail
+# heavily inspired by https://github.com/hashicorp/terraform-github-actions/blob/master/src/main.sh
+function installTerraform {
+  if [[ "${tfVersion}" == "latest" ]]; then
+    echo "Checking the latest version of Terraform"
+    tfVersion=$(curl -sL https://releases.hashicorp.com/terraform/index.json | jq -r '.versions[].version' | grep -v '[-].*' | sort -rV | head -n 1)
 
-GODIR=/go/src/github.com/fac
+    if [[ -z "${tfVersion}" ]]; then
+      echo "Failed to fetch the latest version"
+      exit 1
+    fi
+  fi
 
-# Setup SSH KEY for private repo access
-echo "Setting up SSH key"
-mkdir -p /root/.ssh && chmod 700 /root/.ssh
-echo "${INPUT_SSH_PRIV_KEY}" > /root/.ssh/id_rsa
-unset INPUT_SSH_PRIV_KEY
+  url="https://releases.hashicorp.com/terraform/${tfVersion}/terraform_${tfVersion}_linux_amd64.zip"
 
-chmod 600 /root/.ssh/id_rsa
-eval $(ssh-agent -s)
-ssh-add
+  echo "Downloading Terraform v${tfVersion}"
+  curl -s -S -L -o /tmp/terraform_${tfVersion} ${url}
+  if [ "${?}" -ne 0 ]; then
+    echo "Failed to download Terraform v${tfVersion}"
+    exit 1
+  fi
+  echo "Successfully downloaded Terraform v${tfVersion}"
 
-# Pre-seed host keys for github.com
-ssh-keyscan github.com >> /root/.ssh/known_hosts
+  echo "Unzipping Terraform v${tfVersion}"
+  unzip -d /usr/local/bin /tmp/terraform_${tfVersion} &> /dev/null
+  if [ "${?}" -ne 0 ]; then
+    echo "Failed to unzip Terraform v${tfVersion}"
+    exit 1
+  fi
+  echo "Successfully unzipped Terraform v${tfVersion}"
+}
 
-# Allow terraform version override
-if [[ ! -z "$INPUT_TERRAFORM_VERSION" ]]; then
-  echo "terraform_version override set to $INPUT_TERRAFORM_VERSION"
-  echo "$INPUT_TERRAFORM_VERSION" > .terraform-version
-  tfenv install "$INPUT_TERRAFORM_VERSION"
-else
-  # Make sure we have the correct terraform version, if we have a .terraform-version file
-  tfenv install || true
-fi
+function parseInputs {
+  # Required inputs
+  if [ "${INPUT_TF_ACTIONS_VERSION}" != "" ]; then
+    tfVersion=${INPUT_TF_ACTIONS_VERSION}
+  else
+    echo "Input terraform_version cannot be empty"
+    exit 1
+  fi
 
-# Setup under GOPATH so dep etc works
-echo "Setting up GOPATH to include $PWD"
-CHECKOUT=$(basename "$PWD")
-mkdir -p $GODIR
-ln -s "$(pwd)" "${GODIR}/${CHECKOUT}"
+  # Optional inputs
+  tfWorkingDir="."
+  if [[ -n "${INPUT_TF_ACTIONS_WORKING_DIR}" ]]; then
+    tfWorkingDir=${INPUT_TF_ACTIONS_WORKING_DIR}
+  fi
 
-cd "${GODIR}/${CHECKOUT}/test"
-echo "Running go dep"
-dep ensure
+  tfComment=0
+  if [ "${INPUT_TF_ACTIONS_COMMENT}" == "1" ] || [ "${INPUT_TF_ACTIONS_COMMENT}" == "true" ]; then
+    tfComment=1
+  fi
+}
+
+parseInputs
+installTerraform
+cd ${GITHUB_WORKSPACE}/${tfWorkingDir} || exit 0
+
+echo "Installing project dependencies"
+go mod download
 
 echo "Starting tests"
-gotestsum --format standard-verbose -- -v -timeout 50m -parallel 128
+gotestsum --format testname -- -timeout 20m 
